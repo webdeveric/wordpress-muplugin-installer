@@ -1,42 +1,37 @@
 <?php
 
-namespace LPLabs\Composer\Tests;
+declare(strict_types=1);
 
-use Composer\Config;
+namespace webdeveric\Composer\Tests;
+
 use Composer\Composer;
-use Composer\IO\ConsoleIO;
-use LPLabs\Composer\WordPressMustUsePlugins;
+use Composer\Downloader\DownloadManager;
+use Composer\Installer\InstallationManager;
+use Composer\IO\NullIO;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use webdeveric\Composer\WordPressMustUsePlugins;
 
-class WordPressMustUsePluginsTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(WordPressMustUsePlugins::class)]
+final class WordPressMustUsePluginsTest extends TestCase
 {
-    /**
-     * @var Composer
-     */
-    protected $composer;
+    protected Composer $composer;
+    protected NullIO & MockObject $io;
+    protected InstallationManager & MockObject $installationManager;
+    protected DownloadManager & MockObject $downloadManager;
 
     /**
-     * @var ConsoleIO|\PHPUnit_Framework_MockObject_MockObject
+     * @SuppressWarnings(PHPMD.StaticAccess)
      */
-    protected $io;
-
-    /**
-     * @var InstallationManager|\PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $installationManager;
-
-    /**
-     * @var Config|\PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $config;
-
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->io = $this->createMock('Composer\IO\ConsoleIO');
+        $this->io = $this->createMock('Composer\IO\NullIO');
         $this->installationManager = $this->createMock('Composer\Installer\InstallationManager');
-        $this->config = $this->createMock('Composer\Config');
+        $this->downloadManager = $this->createMock('Composer\Downloader\DownloadManager');
 
-        $this->composer = new Composer();
-        $this->composer->setConfig($this->config);
+        $this->composer = \Composer\Factory::create($this->io);
+        $this->composer->setDownloadManager($this->downloadManager);
         $this->composer->setInstallationManager($this->installationManager);
     }
 
