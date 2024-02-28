@@ -3,6 +3,5 @@
 /docs/
 /vendor/
 /private/
-composer.lock
 phpmd-report.xml
 .phpunit.cache/
