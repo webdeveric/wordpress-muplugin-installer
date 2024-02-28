@@ -2,25 +2,44 @@
 /**
  * Install WordPress must-use plugins with Composer
  *
- * @author Eric King <eric.king@lonelyplanet.com>
+ * @author Eric King <eric@webdeveric.com>
  */
 
-namespace LPLabs\Composer;
+namespace webdeveric\Composer;
 
 use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
-use LPLabs\Composer\Installer\WordPressMustUsePluginInstaller;
-use LPLabs\Composer\Util\Filesystem;
+use webdeveric\Composer\Installer\WordPressMustUsePluginInstaller;
 
-class WordPressMustUsePlugins implements PluginInterface
+final class WordPressMustUsePlugins implements PluginInterface
 {
-    public function activate(Composer $composer, IOInterface $io)
+    private WordPressMustUsePluginInstaller | null $installer = null;
+
+    public function activate(Composer $composer, IOInterface $io): void
     {
-        $composer->getInstallationManager()->addInstaller(
-            new WordPressMustUsePluginInstaller($io, $composer, 'wordpress-muplugin', new Filesystem)
-        );
+        $this->installer = new WordPressMustUsePluginInstaller($io, $composer, 'wordpress-muplugin');
+
+        $composer->getInstallationManager()->addInstaller($this->installer);
 
         $io->notice(sprintf('<fg=magenta>Composer plugin activated:</> <fg=default>%s</>', self::class));
+    }
+
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function deactivate(Composer $composer, IOInterface $io): void
+    {
+        if ($this->installer) {
+            $composer->getInstallationManager()->removeInstaller($this->installer);
+        }
+    }
+
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function uninstall(Composer $composer, IOInterface $io): void
+    {
+        // Do nothing
     }
 }

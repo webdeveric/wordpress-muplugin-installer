@@ -1,11 +1,12 @@
 <?php
+
 /**
  * Install WordPress must-use plugins with Composer
  *
- * @author Eric King <eric.king@lonelyplanet.com>
+ * @author Eric King <eric@webdeveric.com>
  */
 
-namespace LPLabs\Composer\Installer;
+namespace webdeveric\Composer\Installer;
 
 use RuntimeException;
 use Composer\Installer\LibraryInstaller;
@@ -15,16 +16,13 @@ use Composer\Repository\InstalledRepositoryInterface;
 
 class WordPressMustUsePluginInstaller extends LibraryInstaller
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function isInstalled(InstalledRepositoryInterface $repo, PackageInterface $package)
+    public function isInstalled(InstalledRepositoryInterface $repo, PackageInterface $package): bool
     {
         $installed = parent::isInstalled($repo, $package);
 
         if ($installed) {
             foreach ($this->getEntryFileLocations($package) as $entryFile) {
-                if (! $this->filesystem->isFile($entryFile)) {
+                if (!is_file($entryFile)) {
                     $installed = false;
                     break;
                 }
@@ -34,9 +32,6 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
         return $installed;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
         parent::install($repo, $package);
@@ -44,9 +39,6 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
         $this->installEntryFiles($package);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target)
     {
         $this->uninstallEntryFiles($initial);
@@ -56,9 +48,6 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
         $this->installEntryFiles($target);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
         $this->uninstallEntryFiles($package);
@@ -66,10 +55,7 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
         parent::uninstall($repo, $package);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getInstallPath(PackageInterface $package)
+    public function getInstallPath(PackageInterface $package): string
     {
         $installer = new WordPressInstaller($package, $this->composer, $this->io);
 
@@ -78,14 +64,11 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
 
     /**
      * Install each must-use plugin entry file
-     *
-     * @param PackageInterface $package
-     * @return void
      */
-    protected function installEntryFiles(PackageInterface $package)
+    protected function installEntryFiles(PackageInterface $package): void
     {
         foreach ($this->getEntryFileLocations($package) as $src => $dest) {
-            $copied = $this->filesystem->copyFile($src, $dest);
+            $copied = $this->filesystem->copy($src, $dest);
 
             $this->io->notice(
                 sprintf(
@@ -96,7 +79,7 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
                 )
             );
 
-            if (! $copied) {
+            if (!$copied) {
                 throw new RuntimeException(sprintf('Cannot copy %s to %s', $src, $dest));
             }
         }
@@ -104,14 +87,11 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
 
     /**
      * Uninstall each must-use plugin entry file
-     *
-     * @param PackageInterface $package
-     * @return void
      */
-    protected function uninstallEntryFiles(PackageInterface $package)
+    protected function uninstallEntryFiles(PackageInterface $package): void
     {
         foreach ($this->getEntryFileLocations($package) as $dest) {
-            $unlinked = $this->filesystem->unlinkFile($dest);
+            $unlinked = $this->filesystem->unlink($dest);
 
             $this->io->notice(
                 sprintf(
@@ -121,7 +101,7 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
                 )
             );
 
-            if (! $unlinked) {
+            if (!$unlinked) {
                 throw new RuntimeException('Cannot unlink ' . $dest);
             }
         }
@@ -129,33 +109,25 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
 
     /**
      * Get an item from the package extra array
-     *
-     * @param PackageInterface $package
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
      */
-    protected function getPackageExtra(PackageInterface $package, $key, $default = null)
+    protected function getPackageExtra(PackageInterface $package, string $key, mixed $default = null): mixed
     {
         $extra = $package->getExtra();
 
-        return array_key_exists($key, $extra) ? $extra[ $key ] : $default;
+        return array_key_exists($key, $extra) ? $extra[$key] : $default;
     }
 
     /**
      * Get the file location source/destination of the must-use plugin entry point files
-     *
-     * @param PackageInterface $package
-     * @return array
      */
-    protected function getEntryFileLocations(PackageInterface $package)
+    protected function getEntryFileLocations(PackageInterface $package): array
     {
         $muPluginsDir = dirname($this->composer->getInstallationManager()->getInstallPath($package));
 
         return array_reduce(
             $this->getPackageEntryPoints($package),
             function ($locations, $entryPoint) use ($muPluginsDir) {
-                $locations[ $entryPoint ] =  $muPluginsDir . DIRECTORY_SEPARATOR . basename($entryPoint);
+                $locations[$entryPoint] =  $muPluginsDir . DIRECTORY_SEPARATOR . basename($entryPoint);
 
                 return $locations;
             },
@@ -165,15 +137,12 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
 
     /**
      * Get the package entry points
-     *
-     * @param PackageInterface $package
-     * @return array
      */
-    protected function getPackageEntryPoints(PackageInterface $package)
+    protected function getPackageEntryPoints(PackageInterface $package): array
     {
         $dir = $this->composer->getInstallationManager()->getInstallPath($package);
         $entry = $this->getPackageExtra($package, 'wordpress-muplugin-entry');
-        $entryPoints = $entry ? (is_array($entry) ? $entry : [ $entry ]) : [];
+        $entryPoints = $entry ? (is_array($entry) ? $entry : [$entry]) : [];
 
         if (empty($entryPoints)) {
             $phpFiles = glob(rtrim($dir, '/') . '/*.php', GLOB_NOSORT);
@@ -184,21 +153,18 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
         }
 
         foreach ($entryPoints as $index => $file) {
-            $entryPoints[ $index ] = $dir . $file;
+            $entryPoints[$index] = $dir . $file;
         }
 
-        return array_filter($entryPoints, [ $this, 'looksLikePlugin' ]);
+        return array_filter($entryPoints, [$this, 'looksLikePlugin']);
     }
 
     /**
      * Does the file look like a WordPress plugin?
-     *
-     * @param string $file
-     * @return bool
      */
-    protected function looksLikePlugin($file)
+    protected function looksLikePlugin(string $file): bool
     {
-        if (! $file || ! $this->filesystem->isFile($file) || ! $this->filesystem->isReadable($file)) {
+        if (!$file || !is_file($file) || !$this->filesystem->isReadable($file)) {
             return false;
         }
 
