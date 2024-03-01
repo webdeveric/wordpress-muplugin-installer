@@ -13,6 +13,7 @@ use Composer\Installer\LibraryInstaller;
 use Composer\Installers\WordPressInstaller;
 use Composer\Package\PackageInterface;
 use Composer\Repository\InstalledRepositoryInterface;
+use React\Promise\PromiseInterface;
 
 class WordPressMustUsePluginInstaller extends LibraryInstaller
 {
@@ -32,27 +33,39 @@ class WordPressMustUsePluginInstaller extends LibraryInstaller
         return $installed;
     }
 
-    public function install(InstalledRepositoryInterface $repo, PackageInterface $package)
+    public function install(InstalledRepositoryInterface $repo, PackageInterface $package): PromiseInterface | null
     {
-        parent::install($repo, $package);
+        $promise = parent::install($repo, $package);
 
-        $this->installEntryFiles($package);
+        if ($promise instanceof PromiseInterface) {
+            return $promise->then(function () use ($package) {
+                $this->installEntryFiles($package);
+            });
+        }
+
+        return null;
     }
 
-    public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target)
+    public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target): PromiseInterface | null
     {
         $this->uninstallEntryFiles($initial);
 
-        parent::update($repo, $initial, $target);
+        $promise = parent::update($repo, $initial, $target);
 
-        $this->installEntryFiles($target);
+        if ($promise instanceof PromiseInterface) {
+            return $promise->then(function () use ($target) {
+                $this->installEntryFiles($target);
+            });
+        }
+
+        return null;
     }
 
-    public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
+    public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package): PromiseInterface | null
     {
         $this->uninstallEntryFiles($package);
 
-        parent::uninstall($repo, $package);
+        return parent::uninstall($repo, $package);
     }
 
     public function getInstallPath(PackageInterface $package): string
