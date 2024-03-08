@@ -21,6 +21,12 @@
       "role": "Developer"
     }
   ],
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/webdeveric"
+    }
+  ],
   "support": {
     "source": "https://github.com/webdeveric/wordpress-muplugin-installer",
     "issues": "https://github.com/webdeveric/wordpress-muplugin-installer/issues"
